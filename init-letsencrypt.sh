@@ -2,6 +2,9 @@
 
 echo "## creating certf"
 sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout localhost.key -out localhost.crt -config localhost.conf
+mkdir data/certbot/
+mkdir data/certbot/conf/
+mkdir data/certbot/conf/live/
 mv localhost.crt data/certbot/conf/live/
 mv localhost.key data/certbot/conf/live/
 
