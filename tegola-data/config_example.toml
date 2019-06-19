@@ -1,0 +1,77 @@
+[webserver]
+port = ":8080"              # port to bind the web server to. defaults ":8080"
+
+	[webserver.headers]
+	Access-Control-Allow-Origin = "*"
+	Cache-Control = "no-cache, no-store, must-revalidate"
+
+[cache]                     # configure a tile cache
+type = "file"               # a file cache will cache to the local file system
+basepath = "/tmp/tegola"    # where to write the file cache
+
+# register data providers
+[[providers]]
+name = "test_postgis"       # provider name is referenced from map layers (required)
+type = "postgis"            # the type of data provider. currently only supports postgis (required)
+host = "db"          # postgis database host (required)
+port = 5432                 # postgis database port (required)
+database = "gis"         # postgis database name (required)
+user = "docker"             # postgis database user (required)
+password = "docker"               # postgis database password (required)
+srid = 3857                 # The default srid for this provider. Defaults to WebMercator (3857) (optional)
+max_connections = 50        # The max connections to maintain in the connection pool. Default is 100. (optional)
+ssl_mode = "prefer"        # PostgreSQL SSL mode*. Default is "disable". (optional)
+
+	[[providers.layers]]
+	name = "landuse"                    # will be encoded as the layer name in the tile
+	tablename = "gis.zoning_base_3857"  # sql or tablename are required
+	geometry_fieldname = "geom"         # geom field. default is geom
+	id_fieldname = "gid"                # geom id field. default is gid
+	srid = 4326                         # the srid of table's geo data. Defaults to WebMercator (3857)
+
+	[[providers.layers]]
+	name = "roads"                      # will be encoded as the layer name in the tile
+	tablename = "gis.zoning_base_3857"  # sql or tablename are required
+	geometry_fieldname = "geom"         # geom field. default is geom
+	geometry_type = "linestring"        # geometry type. if not set, tables are inspected at startup to try and infer the gemetry type
+	id_fieldname = "gid"                # geom id field. default is gid
+	fields = [ "class", "name" ]        # Additional fields to include in the select statement.
+
+	[[providers.layers]]
+	name = "rivers"                     # will be encoded as the layer name in the tile
+	geometry_fieldname = "geom"         # geom field. default is geom
+	id_fieldname = "gid"                # geom id field. default is gid
+	# Custom sql to be used for this layer. Note: that the geometery field is wraped
+	# in a ST_AsBinary() and the use of the !BBOX! token
+	sql = "SELECT gid, ST_AsBinary(geom) AS geom FROM gis.rivers WHERE geom && !BBOX!"
+
+	[[providers.layers]]
+	name = "buildings"                  # will be encoded as the layer name in the tile
+	geometry_fieldname = "geom"         # geom field. default is geom
+	id_fieldname = "gid"                # geom id field. default is gid
+	# Custom sql to be used for this layer as a sub query. ST_AsBinary and
+	# !BBOX! filter are applied automatically.
+	sql = "(SELECT gid, geom, type FROM buildings WHERE scalerank = !ZOOM! LIMIT 1000) AS sub"
+
+# maps are made up of layers
+[[maps]]
+name = "zoning"                              # used in the URL to reference this map (/maps/:map_name)
+
+	[[maps.layers]]
+	name = "landuse"                         # name is optional. If it's not defined the name of the ProviderLayer will be used.
+	                                         # It can also be used to group multiple ProviderLayers under the same namespace.
+	provider_layer = "test_postgis.landuse"  # must match a data provider layer
+	min_zoom = 12                            # minimum zoom level to include this layer
+	max_zoom = 16                            # maximum zoom level to include this layer
+
+		[maps.layers.default_tags]           # table of default tags to encode in the tile. SQL statements will override
+		class = "park"
+
+	[[maps.layers]]
+	name = "rivers"                          # name is optional. If it's not defined the name of the ProviderLayer will be used.
+	                                         # It can also be used to group multiple ProviderLayers under the same namespace.
+	provider_layer = "test_postgis.rivers"   # must match a data provider layer
+	dont_simplify = true                     # optionally, turn off simplification for this layer. Default is false.
+	dont_clip = true                         # optionally, turn off clipping for this layer. Default is false.
+	min_zoom = 10                            # minimum zoom level to include this layer
+	max_zoom = 18                            # maximum zoom level to include this layer
