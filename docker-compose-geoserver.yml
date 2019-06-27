@@ -12,8 +12,9 @@ networks:
 services:
    db:
       image: kartoza/postgis:11.0-2.5
+      container_name: db
       volumes:
-         - geo-db-data:/var/lib/postgresql
+         - ./db-data:/var/lib/postgresql
       ports:
         - "25434:5432"
       env_file:

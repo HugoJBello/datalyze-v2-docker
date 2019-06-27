@@ -1,1 +1,3 @@
 /data/certbot
+*.tar
+db-data/11/*
