@@ -1,0 +1,70 @@
+version: '2.1'
+
+volumes:
+   geoserver-data:
+   db-mongo:
+   geo-db-data:
+
+networks:
+  my-network:
+    external: true
+
+services:
+   db:
+      image: kartoza/postgis:11.0-2.5
+      container_name: db
+      volumes:
+         - ./db-data:/var/lib/postgresql
+      ports:
+        - "25434:5432"
+      env_file:
+      - docker-env/db.env
+      restart: on-failure
+      networks:
+      -  my-network
+      healthcheck:
+        test: "exit 0"
+   #db-mongo:
+   #   image: mongo
+   #   ports:
+   #     - "27017-27019:27017-27019"
+   #   restart: on-failure
+   mapserver:
+      image: oscarfonts/geoserver
+      ports:
+        - "8080:8080"
+      volumes:
+        - ./geoserver-data:/opt/geoserver/data/docs
+      restart: on-failure
+      networks:
+      -  my-network
+      depends_on:
+        db:
+          condition: service_healthy
+      healthcheck:
+        test: curl --fail -s http://localhost:8080/ || exit 1
+        interval: 1m30s
+        timeout: 10s
+        retries: 3
+   nginx:
+       image: nginx:1.15-alpine
+       restart: unless-stopped
+       networks:
+       -  my-network
+       volumes:
+         - ./data/nginx:/etc/nginx/conf.d
+         - ./data/certbot/conf:/etc/letsencrypt
+         - ./data/certbot/www:/var/www/certbot
+       ports:
+         - "80:80"
+         - "443:443"
+       command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+   certbot:
+       image: certbot/certbot
+       restart: unless-stopped
+       networks:
+       -  my-network
+       volumes:
+         - ./data/certbot/conf:/etc/letsencrypt
+         - ./data/certbot/www:/var/www/certbot
+       entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
