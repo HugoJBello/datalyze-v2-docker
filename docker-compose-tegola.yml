@@ -10,24 +10,6 @@ networks:
     external: true
 
 services:
-   db:
-      image: kartoza/postgis:11.0-2.5
-      volumes:
-         - geo-db-data:/var/lib/postgresql
-      ports:
-        - "25434:5432"
-      env_file:
-      - docker-env/db.env
-      restart: on-failure
-      networks:
-      -  my-network
-      healthcheck:
-        test: "exit 0"
-   #db-mongo:
-   #   image: mongo
-   #   ports:
-   #     - "27017-27019:27017-27019"
-   #   restart: on-failure
    mapserver:
       image: gospatial/tegola
       ports:
@@ -38,9 +20,6 @@ services:
       restart: on-failure
       networks:
       -  my-network
-      depends_on:
-        db:
-          condition: service_healthy
       healthcheck:
         test: curl --fail -s http://localhost:8080/ || exit 1
         interval: 1m30s

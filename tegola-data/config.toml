@@ -11,33 +11,20 @@ basepath = "/tmp/tegola"    # where to write the file cache
 
 # register data providers
 [[providers]]
-name = "test_postgis"       # provider name is referenced from map layers (required)
-type = "postgis"            # the type of data provider. currently only supports postgis (required)
-host = "db"          # postgis database host (required)
-port = 5432                 # postgis database port (required)
-database = "gis"         # postgis database name (required)
-user = "docker"             # postgis database user (required)
-password = "docker"               # postgis database password (required)
-max_connections = 50        # The max connections to maintain in the connection pool. Default is 100. (optional)
-ssl_mode = "prefer"        # PostgreSQL SSL mode*. Default is "disable". (optional)
-
-	[[providers.layers]]
-	name = "test"                    # will be encoded as the layer name in the tile
-	tablename = "waypoints"          # sql or tablename are required
-	geometry_fieldname = "geom"         # geom field. default is geom
-	id_fieldname = "id"                # geom id field. default is gid
-
-
+name = "sample_gpkg"
+type = "gpkg"
+filepath = "/opt/tegola_config/polygon_cusecs_data.gpkg"
 # maps are made up of layers
+	[[providers.layers]]
+	name = "polygon_cusecs"
+	tablename = "polygon_cusecs"
+	
+
 [[maps]]
-name = "postgis"                              # used in the URL to reference this map (/maps/:map_name)
+name = "test-map"                              # used in the URL to reference this map (/maps/:map_name)
 
 	[[maps.layers]]
 	name = "test"                         # name is optional. If it's not defined the name of the ProviderLayer will be used.
 	                                         # It can also be used to group multiple ProviderLayers under the same namespace.
-	provider_layer = "test_postgis.test"  # must match a data provider layer
-	dont_simplify = true                     # optionally, turn off simplification for this layer. Default is false.
-	dont_clip = true                         # optionally, turn off clipping for this layer. Default is false.
-	min_zoom = 10                            # minimum zoom level to include this layer
-	max_zoom = 18                            # maximum zoom level to include this layer
-
+	provider_layer = "sample_gpkg.polygon_cusecs"  # must match a data provider layer
+	

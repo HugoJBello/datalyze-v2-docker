@@ -11,11 +11,12 @@ networks:
 
 services:
    mapserver:
-      image: oscarfonts/geoserver
+      image: gospatial/tegola
       ports:
         - "8080:8080"
       volumes:
-        - ./geoserver-data:/opt/geoserver/data/docs
+        - ./tegola-data:/opt/tegola_config
+      command: "serve --config '/opt/tegola_config/config.toml'"
       restart: on-failure
       networks:
       -  my-network
